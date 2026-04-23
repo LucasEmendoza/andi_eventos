@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANDI — Sistema de Gestión de Eventos</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --c-bg: #F7F6F2;
+  --c-surface: #FFFFFF;
+  --c-border: #E2E0D8;
+  --c-border-strong: #C8C5BB;
+  --c-text: #1A1916;
+  --c-text-2: #6B6860;
+  --c-text-3: #A09D96;
+  --c-accent: #1A3A2A;
+  --c-accent-light: #EAF2EC;
+  --c-accent-mid: #2D6B47;
+  --c-blue: #1E3A8A;
+  --c-blue-light: #EFF6FF;
+  --c-amber: #92400E;
+  --c-amber-light: #FFFBEB;
+  --c-red: #991B1B;
+  --c-red-light: #FEF2F2;
+  --c-green: #166534;
+  --c-green-light: #F0FDF4;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body { font-family: var(--font); background: var(--c-bg); color: var(--c-text); min-height: 100vh; }
+
+/* ── LAYOUT ── */
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: var(--c-accent); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+.main { flex: 1; overflow-x: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar-brand { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,.1); }
+.sidebar-brand .logo { font-size: 18px; font-weight: 600; letter-spacing: -.3px; }
+.sidebar-brand .tagline { font-size: 11px; color: rgba(255,255,255,.5); margin-top: 3px; letter-spacing: .04em; }
+.sidebar-nav { padding: 12px 10px; flex: 1; }
+.nav-section { font-size: 10px; letter-spacing: .1em; color: rgba(255,255,255,.35); padding: 14px 10px 6px; text-transform: uppercase; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,.7); transition: all .15s; margin-bottom: 2px; }
+.nav-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,.15); color: #fff; font-weight: 500; }
+.nav-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+.sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,.1); font-size: 11px; color: rgba(255,255,255,.35); }
+
+/* ── TOPBAR ── */
+.topbar { background: var(--c-surface); border-bottom: 1px solid var(--c-border); padding: 0 28px; height: 56px; display: flex; align-items: center; justify-content: space-between; }
+.topbar-title { font-size: 15px; font-weight: 500; }
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+/* ── PAGE CONTENT ── */
+.page { display: none; padding: 28px; }
+.page.active { display: block; }
+
+/* ── CARDS ── */
+.card { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); }
+.card-header { padding: 16px 20px; border-bottom: 1px solid var(--c-border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card-header h3 { font-size: 13px; font-weight: 500; }
+.card-body { padding: 20px; }
+
+/* ── METRIC CARDS ── */
+.metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.metric { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--radius-lg); padding: 18px 20px; }
+.metric-label { font-size: 11px; color: var(--c-text-3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+.metric-value { font-size: 26px; font-weight: 300; line-height: 1; letter-spacing: -.5px; }
+.metric-sub { font-size: 11px; color: var(--c-text-3); margin-top: 6px; }
+.metric-up { color: var(--c-green); }
+.metric-warn { color: var(--c-amber); }
+.metric-bad { color: var(--c-red); }
+
+/* ── GRID LAYOUTS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ── TABLES ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 500; color: var(--c-text-3); text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid var(--c-border); white-space: nowrap; }
+td { padding: 11px 14px; border-bottom: 1px solid var(--c-border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--c-bg); }
+.td-name { font-weight: 500; }
+
+/* ── BADGES ── */
+.badge { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
+.badge-green { background: var(--c-green-light); color: var(--c-green); }
+.badge-amber { background: var(--c-amber-light); color: var(--c-amber); }
+.badge-red { background: var(--c-red-light); color: var(--c-red); }
+.badge-blue { background: var(--c-blue-light); color: var(--c-blue); }
+.badge-gray { background: #F3F2EE; color: var(--c-text-2); }
+
+/* ── SCORE BAR ── */
+.score-wrap { display: flex; align-items: center; gap: 8px; }
+.score-bar-bg { width: 80px; height: 5px; background: var(--c-border); border-radius: 99px; }
+.score-bar-fill { height: 100%; border-radius: 99px; transition: width .4s; }
+
+/* ── BUTTONS ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-text); transition: all .15s; font-family: var(--font); white-space: nowrap; }
+.btn:hover { border-color: var(--c-border-strong); background: var(--c-bg); }
+.btn:active { transform: scale(.98); }
+.btn svg { width: 14px; height: 14px; }
+.btn-primary { background: var(--c-accent); color: #fff; border-color: var(--c-accent); }
+.btn-primary:hover { background: var(--c-accent-mid); border-color: var(--c-accent-mid); }
+.btn-danger { background: var(--c-red-light); color: var(--c-red); border-color: #fca5a5; }
+.btn-sm { padding: 5px 12px; font-size: 12px; }
+
+/* ── FORMS ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg.full { grid-column: 1 / -1; }
+.fg label { font-size: 12px; font-weight: 500; color: var(--c-text-2); }
+.fg label .req { color: var(--c-red); margin-left: 2px; }
+.fg input, .fg select, .fg textarea {
+  font-size: 13px; padding: 8px 11px; border: 1px solid var(--c-border);
+  border-radius: var(--radius); background: var(--c-surface); color: var(--c-text);
+  font-family: var(--font); transition: border-color .15s;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus { outline: none; border-color: var(--c-accent); }
+.fg textarea { resize: vertical; min-height: 72px; }
+.fg .hint { font-size: 11px; color: var(--c-text-3); }
+.fg.err input, .fg.err select { border-color: var(--c-red); }
+.fg .err-msg { font-size: 11px; color: var(--c-red); display: none; }
+.fg.err .err-msg { display: block; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--c-border); }
+
+/* ── SEARCH ── */
+.search-bar { display: flex; align-items: center; gap: 8px; background: var(--c-bg); border: 1px solid var(--c-border); border-radius: var(--radius); padding: 7px 12px; }
+.search-bar svg { width: 14px; height: 14px; color: var(--c-text-3); flex-shrink: 0; }
+.search-bar input { border: none; background: transparent; font-size: 13px; color: var(--c-text); font-family: var(--font); flex: 1; outline: none; }
+
+/* ── STEP BAR ── */
+.step-bar { display: flex; align-items: center; margin-bottom: 28px; }
+.step-node { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.step-circle { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--c-border); background: var(--c-surface); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--c-text-3); transition: all .2s; }
+.step-circle.done { background: var(--c-green); border-color: var(--c-green); color: #fff; }
+.step-circle.active { background: var(--c-accent); border-color: var(--c-accent); color: #fff; }
+.step-label-txt { font-size: 11px; color: var(--c-text-3); white-space: nowrap; }
+.step-label-txt.active { color: var(--c-accent); font-weight: 500; }
+.step-connector { flex: 1; height: 1px; background: var(--c-border); margin: 0 6px; margin-bottom: 18px; }
+
+/* ── ALERTS ── */
+.alert { display: flex; gap: 12px; padding: 12px 16px; border-radius: var(--radius); font-size: 13px; margin-bottom: 10px; }
+.alert-red { background: var(--c-red-light); color: var(--c-red); border: 1px solid #fca5a5; }
+.alert-amber { background: var(--c-amber-light); color: var(--c-amber); border: 1px solid #fcd34d; }
+.alert-green { background: var(--c-green-light); color: var(--c-green); border: 1px solid #86efac; }
+.alert-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.alert-dot-red { background: var(--c-red); }
+.alert-dot-amber { background: var(--c-amber); }
+.alert-dot-green { background: var(--c-green); }
+
+/* ── TABS ── */
+.inner-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--c-border); margin-bottom: 20px; }
+.inner-tab { padding: 10px 18px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; color: var(--c-text-2); margin-bottom: -1px; transition: all .15s; }
+.inner-tab.active { color: var(--c-accent); border-bottom-color: var(--c-accent); font-weight: 500; }
+.inner-tab:hover:not(.active) { color: var(--c-text); }
+
+/* ── ASISTENCIA VISUAL ── */
+.asist-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.asist-bar-bg { flex: 1; height: 6px; background: var(--c-border); border-radius: 99px; overflow: hidden; }
+.asist-bar-fill { height: 100%; border-radius: 99px; }
+
+/* ── MODAL ── */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--c-surface); border-radius: var(--radius-lg); width: 560px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.15); }
+.modal-header { padding: 20px 24px; border-bottom: 1px solid var(--c-border); display: flex; justify-content: space-between; align-items: center; }
+.modal-header h3 { font-size: 15px; font-weight: 500; }
+.modal-body { padding: 24px; }
+.modal-close { background: none; border: none; cursor: pointer; color: var(--c-text-3); padding: 4px; border-radius: 4px; }
+.modal-close:hover { color: var(--c-text); background: var(--c-bg); }
+
+/* ── QR MOCK ── */
+.qr-block { display: inline-grid; grid-template-columns: repeat(8, 8px); gap: 2px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--c-border); }
+.qr-cell { width: 8px; height: 8px; border-radius: 1px; }
+
+/* ── EMPTY STATE ── */
+.empty { text-align: center; padding: 48px 20px; color: var(--c-text-3); }
+.empty svg { width: 36px; height: 36px; margin: 0 auto 12px; display: block; }
+.empty p { font-size: 13px; }
+
+/* ── SUCCESS ── */
+.success-card { text-align: center; padding: 32px 20px; }
+.success-icon { width: 48px; height: 48px; background: var(--c-green-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.success-icon svg { width: 22px; height: 22px; stroke: var(--c-green); fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ── CONFIRM BOX ── */
+.confirm-grid { background: var(--c-bg); border-radius: var(--radius); padding: 14px 16px; }
+.confirm-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--c-border); }
+.confirm-row:last-child { border-bottom: none; }
+.confirm-row span:first-child { color: var(--c-text-2); }
+.confirm-row span:last-child { font-weight: 500; }
+
+/* ── CHECKIN ── */
+.checkin-status { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 1.5px solid var(--c-border); background: var(--c-surface); transition: all .2s; }
+.checkin-status.present { background: var(--c-green); border-color: var(--c-green); }
+.checkin-status.absent { background: var(--c-surface); }
+.checkin-status svg { width: 14px; height: 14px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; display: none; }
+.checkin-status.present svg { display: block; }
+
+/* ── ICE GAUGE ── */
+.ice-ring { position: relative; display: inline-block; }
+.ice-ring svg { display: block; }
+.ice-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ice-val { font-size: 22px; font-weight: 300; letter-spacing: -.5px; }
+.ice-lbl { font-size: 10px; color: var(--c-text-3); text-transform: uppercase; letter-spacing: .06em; }
+
+/* ── MISC ── */
+.section-label { font-size: 11px; font-weight: 500; color: var(--c-text-3); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px; }
+.page-header { margin-bottom: 24px; }
+.page-header h2 { font-size: 20px; font-weight: 500; letter-spacing: -.3px; }
+.page-header p { font-size: 13px; color: var(--c-text-2); margin-top: 4px; }
+.mono { font-family: var(--font-mono); font-size: 12px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; background: var(--c-accent-light); color: var(--c-accent); font-weight: 500; }
+hr-light { display: block; height: 1px; background: var(--c-border); margin: 16px 0; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.flex-gap { display: flex; align-items: center; gap: 8px; }
+.tag { background: var(--c-bg); border: 1px solid var(--c-border); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--c-text-2); font-family: var(--font-mono); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .sidebar { width: 56px; }
+  .sidebar-brand .logo, .sidebar-brand .tagline, .nav-item span, .nav-section, .sidebar-footer { display: none; }
+  .nav-item { justify-content: center; padding: 10px; }
+  .metrics-grid { grid-template-columns: 1fr 1fr; }
+  .form-grid, .grid-2, .grid-3 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div id="loader" style="display:none;position:fixed;inset:0;
+  background:rgba(247,246,242,0.9);z-index:999;
+  align-items:center;justify-content:center;
+  font-size:14px;color:#1A3A2A;">
+  Cargando datos...
+</div>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">ANDI</div>
+    <div class="tagline">Gestión de Eventos</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">Principal</div>
+    <div class="nav-item active" onclick="showPage('dashboard', this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="showPage('eventos', this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <span>Eventos</span>
+    </div>
+    <div class="nav-section">Participantes</div>
+    <div class="nav-item" onclick="showPage('inscripcion', this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Inscripción</span>
+    </div>
+    <div class="nav-item" onclick="showPage('asistencia', this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span>Asistencia</span>
+    </div>
+    <div class="nav-section">Analítica</div>
+    <div class="nav-item" onclick="showPage('empresas', this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Empresas</span>
+    </div>
+    <div class="nav-item" onclick="showPage('metricas', this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span>Métricas ICE</span>
+    </div>
+    <div class="nav-item" onclick="showPage('alertas', this)">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span>Alertas</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">v1.0 © ANDI 2025</div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-title" id="topbar-title">Dashboard</div>
+  <div class="topbar-actions">
+    <button class="btn btn-sm" onclick="showPage('inscripcion', null)">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Nueva inscripción
+    </button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: DASHBOARD -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <h2>Resumen general</h2>
+    <p>Visión consolidada de eventos, participación e índice de compromiso</p>
+  </div>
+
+  <div class="metrics-grid" id="dash-metrics"></div>
+
+  <div class="grid-2 mb-6">
+    <div class="card">
+      <div class="card-header"><h3>Próximos eventos</h3></div>
+      <div class="card-body" id="dash-proximos"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Asistencia por tipo de evento</h3></div>
+      <div class="card-body" id="dash-tipos"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Top empresas por índice ICE</h3>
+      <button class="btn btn-sm" onclick="showPage('empresas', null)">Ver todas</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Empresa</th><th>Sector</th><th>ICE Score</th><th>Eventos</th><th>Segmento</th>
+      </tr></thead><tbody id="dash-empresas"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: EVENTOS -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-eventos">
+  <div class="page-header flex-between">
+    <div>
+      <h2>Eventos</h2>
+      <p>Creación y gestión de eventos ANDI</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('modal-evento')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Crear evento
+    </button>
+  </div>
+
+  <div class="flex-gap mb-4">
+    <div class="search-bar" style="flex:1">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Buscar evento..." id="search-eventos" oninput="renderEventos()">
+    </div>
+    <select class="btn" id="filter-estado-ev" onchange="renderEventos()">
+      <option value="">Todos los estados</option>
+      <option value="Próximo">Próximos</option>
+      <option value="En curso">En curso</option>
+      <option value="Realizado">Realizados</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Evento</th><th>Fecha</th><th>Tipo</th><th>Comité</th><th>Peso</th><th>Inscritos</th><th>Asistencia</th><th>Estado</th><th></th>
+      </tr></thead><tbody id="tabla-eventos"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: INSCRIPCIÓN -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-inscripcion">
+  <div class="page-header">
+    <h2>Inscripción de participantes</h2>
+    <p>Registro de asistentes a eventos. Todos los campos marcados con * son obligatorios.</p>
+  </div>
+
+  <div class="grid-2">
+    <!-- Formulario -->
+    <div class="card">
+      <div class="card-header"><h3>Nuevo registro</h3></div>
+      <div class="card-body">
+        <div class="step-bar" id="ins-stepbar">
+          <div class="step-node">
+            <div class="step-circle active" id="isc1">1</div>
+            <div class="step-label-txt active" id="isl1">Evento</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-node">
+            <div class="step-circle" id="isc2">2</div>
+            <div class="step-label-txt" id="isl2">Empresa</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-node">
+            <div class="step-circle" id="isc3">3</div>
+            <div class="step-label-txt" id="isl3">Participante</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step-node">
+            <div class="step-circle" id="isc4">4</div>
+            <div class="step-label-txt" id="isl4">Confirmar</div>
+          </div>
+        </div>
+
+        <!-- Step 1 -->
+        <div id="ins-s1">
+          <div class="fg mb-4" id="fg-ins-evento">
+            <label>Evento <span class="req">*</span></label>
+            <select id="ins-evento">
+              <option value="">Seleccione un evento...</option>
+            </select>
+            <div class="err-msg">Seleccione un evento</div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" onclick="insNext(2)">Continuar</button>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="ins-s2" style="display:none">
+          <div class="form-grid">
+            <div class="fg" id="fg-ins-nit">
+              <label>NIT empresa <span class="req">*</span></label>
+              <input type="text" id="ins-nit" placeholder="900123456-1" oninput="buscarEmpresa()">
+              <div class="hint">Ingrese NIT para buscar empresa afiliada</div>
+              <div class="err-msg">Ingrese el NIT</div>
+            </div>
+            <div class="fg" id="fg-ins-empresa">
+              <label>Nombre empresa <span class="req">*</span></label>
+              <input type="text" id="ins-empresa" placeholder="Razón social">
+              <div class="err-msg">Ingrese el nombre</div>
+            </div>
+          </div>
+          <div id="empresa-match" style="display:none;margin-top:8px;padding:10px 12px;background:var(--c-accent-light);border-radius:var(--radius);font-size:12px;color:var(--c-accent);"></div>
+          <div class="form-actions">
+            <button class="btn" onclick="insNext(1)">Atrás</button>
+            <button class="btn btn-primary" onclick="insNext(3)">Continuar</button>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div id="ins-s3" style="display:none">
+          <div class="form-grid">
+            <div class="fg" id="fg-ins-cedula">
+              <label>Cédula <span class="req">*</span></label>
+              <input type="text" id="ins-cedula" placeholder="1234567890">
+              <div class="err-msg">Ingrese la cédula</div>
+            </div>
+            <div class="fg" id="fg-ins-nombre">
+              <label>Nombre completo <span class="req">*</span></label>
+              <input type="text" id="ins-nombre" placeholder="Nombres y apellidos">
+              <div class="err-msg">Ingrese el nombre</div>
+            </div>
+            <div class="fg" id="fg-ins-cargo">
+              <label>Cargo <span class="req">*</span></label>
+              <input type="text" id="ins-cargo" placeholder="Gerente General">
+              <div class="err-msg">Ingrese el cargo</div>
+            </div>
+            <div class="fg" id="fg-ins-cel">
+              <label>Celular <span class="req">*</span></label>
+              <input type="tel" id="ins-cel" placeholder="300 000 0000">
+              <div class="err-msg">Ingrese el celular</div>
+            </div>
+            <div class="fg full" id="fg-ins-email">
+              <label>Email <span class="req">*</span></label>
+              <input type="email" id="ins-email" placeholder="correo@empresa.com">
+              <div class="err-msg">Ingrese un email válido</div>
+            </div>
+            <div class="fg full">
+              <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+                <input type="checkbox" id="ins-trat" style="margin-top:2px;width:15px;height:15px;accent-color:var(--c-accent);">
+                <span>Autoriza tratamiento de datos personales (Ley 1581/2012) <span class="req">*</span></span>
+              </label>
+              <div class="err-msg" id="err-trat" style="display:none">Debe aceptar el tratamiento de datos</div>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn" onclick="insNext(2)">Atrás</button>
+            <button class="btn btn-primary" onclick="insNext(4)">Revisar</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Confirm -->
+        <div id="ins-s4" style="display:none">
+          <div class="section-label mb-4">Verifique antes de confirmar</div>
+          <div class="confirm-grid mb-4" id="ins-resumen"></div>
+          <div class="form-actions">
+            <button class="btn" onclick="insNext(3)">Corregir</button>
+            <button class="btn btn-primary" onclick="confirmarInscripcion()">Confirmar inscripción</button>
+          </div>
+        </div>
+
+        <!-- Success -->
+        <div id="ins-ok" style="display:none">
+          <div class="success-card">
+            <div class="success-icon"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+            <h3 style="margin-bottom:6px;font-size:15px;">Inscripción registrada</h3>
+            <p style="font-size:13px;color:var(--c-text-2);margin-bottom:16px;">Se generó el código QR. El participante recibirá confirmación por email.</p>
+            <div class="confirm-grid mb-4" id="ins-ok-data"></div>
+            <div style="margin:16px 0;" id="qr-display"></div>
+            <button class="btn btn-primary" onclick="resetInscripcion()">Nueva inscripción</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla inscritos -->
+    <div class="card">
+      <div class="card-header">
+        <h3>Inscritos recientes</h3>
+        <span class="pill" id="ins-count-badge">0</span>
+      </div>
+      <div class="table-wrap" style="max-height:520px;overflow-y:auto;">
+        <table><thead><tr>
+          <th>Nombre</th><th>Empresa</th><th>Evento</th><th>Datos</th>
+        </tr></thead><tbody id="tabla-inscritos"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: ASISTENCIA -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-asistencia">
+  <div class="page-header flex-between">
+    <div>
+      <h2>Registro de asistencia</h2>
+      <p>Check-in digital por evento. Marque los asistentes manualmente o simule lectura QR.</p>
+    </div>
+  </div>
+
+  <div class="grid-2 mb-6">
+    <div class="fg">
+      <label>Seleccione el evento</label>
+      <select id="asist-evento-sel" onchange="renderAsistencia()">
+        <option value="">— Seleccione —</option>
+      </select>
+    </div>
+    <div class="flex-gap" style="align-self:flex-end;">
+      <button class="btn" onclick="simQR()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3M17 20h3M20 17v3"/></svg>
+        Simular QR
+      </button>
+      <button class="btn" onclick="marcarTodos()">Todos presentes</button>
+      <button class="btn btn-danger" onclick="resetAsistencia()">Reiniciar</button>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><h3>Lista de inscritos — check-in</h3>
+        <div class="search-bar" style="width:200px">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="Buscar..." id="search-asist" oninput="renderAsistencia()">
+        </div>
+      </div>
+      <div class="table-wrap" style="max-height:440px;overflow-y:auto;">
+        <table><thead><tr>
+          <th></th><th>Nombre</th><th>Empresa</th><th>Cargo</th><th>Hora</th>
+        </tr></thead><tbody id="tabla-asistencia"></tbody></table>
+      </div>
+    </div>
+    <div>
+      <div class="card mb-4">
+        <div class="card-header"><h3>Resumen del evento</h3></div>
+        <div class="card-body">
+          <div class="metrics-grid" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="metric"><div class="metric-label">Inscritos</div><div class="metric-value" id="asist-ins">0</div></div>
+            <div class="metric"><div class="metric-label">Asistieron</div><div class="metric-value metric-up" id="asist-pres">0</div></div>
+            <div class="metric"><div class="metric-label">% Asist.</div><div class="metric-value" id="asist-pct">0%</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>Asistencia por empresa</h3></div>
+        <div class="card-body" id="asist-por-empresa"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: EMPRESAS -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-empresas">
+  <div class="page-header flex-between">
+    <div>
+      <h2>Empresas afiliadas</h2>
+      <p>Directorio e índice ICE de participación por empresa</p>
+    </div>
+    <button class="btn btn-primary" onclick="openModal('modal-empresa')">+ Agregar empresa</button>
+  </div>
+
+  <div class="flex-gap mb-4">
+    <div class="search-bar" style="flex:1">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Buscar por nombre o NIT..." id="search-empresas" oninput="renderEmpresas()">
+    </div>
+    <select class="btn" id="filter-seg" onchange="renderEmpresas()">
+      <option value="">Todos los segmentos</option>
+      <option value="Champions">Champions</option>
+      <option value="Activa">Activas</option>
+      <option value="En riesgo">En riesgo</option>
+      <option value="Inactiva">Inactivas</option>
+    </select>
+    <select class="btn" id="filter-sector" onchange="renderEmpresas()">
+      <option value="">Todos los sectores</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>NIT</th><th>Empresa</th><th>Sector</th><th>Estado</th><th>ICE Score</th><th>Eventos inscritos</th><th>Asistencias</th><th>Segmento</th>
+      </tr></thead><tbody id="tabla-empresas"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: MÉTRICAS ICE -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-metricas">
+  <div class="page-header">
+    <h2>Métricas e Índice de Compromiso (ICE)</h2>
+    <p>Análisis de participación ponderada por peso estratégico de cada evento</p>
+  </div>
+
+  <div class="card mb-6">
+    <div class="card-header"><h3>Fórmula ICE</h3></div>
+    <div class="card-body">
+      <div style="font-size:13px;color:var(--c-text-2);margin-bottom:10px;">El Índice de Compromiso Empresarial pondera la asistencia por la importancia estratégica de cada evento:</div>
+      <div style="background:var(--c-bg);border-radius:var(--radius);padding:14px 18px;font-family:var(--font-mono);font-size:13px;color:var(--c-accent);">
+        ICE = Σ (asistió × peso_evento) / Σ (peso_eventos_inscritos) × 100
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:16px;" id="peso-legend"></div>
+    </div>
+  </div>
+
+  <div class="grid-2 mb-6">
+    <div class="card">
+      <div class="card-header"><h3>Distribución por segmento</h3></div>
+      <div class="card-body" id="seg-dist"></div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3>Participación por sector</h3></div>
+      <div class="card-body" id="sector-asist"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>Ranking completo ICE — todas las empresas</h3></div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>#</th><th>Empresa</th><th>Sector</th><th>Eventos insc.</th><th>Peso total insc.</th><th>Asistencias</th><th>Peso asistido</th><th>ICE</th><th>Segmento</th>
+      </tr></thead><tbody id="tabla-ice"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- PAGE: ALERTAS -->
+<!-- ════════════════════════════════════════════ -->
+<div class="page" id="page-alertas">
+  <div class="page-header">
+    <h2>Alertas y segmentación</h2>
+    <p>El sistema detecta patrones automáticamente y genera acciones sugeridas</p>
+  </div>
+
+  <div class="grid-2 mb-6">
+    <div>
+      <div class="section-label">Alertas críticas</div>
+      <div id="alertas-criticas"></div>
+    </div>
+    <div>
+      <div class="section-label">Alertas de atención</div>
+      <div id="alertas-atencion"></div>
+    </div>
+  </div>
+
+  <div class="card mb-6">
+    <div class="card-header"><h3>Segmentación automática de empresas</h3></div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Segmento</th><th>Criterio ICE</th><th>Empresas</th><th>% del total</th><th>Acción recomendada</th>
+      </tr></thead><tbody id="tabla-segmentos"></tbody></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h3>Empresas que requieren acción inmediata</h3></div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Empresa</th><th>Sector</th><th>ICE</th><th>Última asistencia</th><th>Segmento</th><th>Acción</th>
+      </tr></thead><tbody id="tabla-accion"></tbody></table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ════════════════════════════════════════════ -->
+<!-- MODALES -->
+<!-- ════════════════════════════════════════════ -->
+
+<!-- Modal: Crear Evento -->
+<div class="modal-overlay" id="modal-evento">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Crear nuevo evento</h3>
+      <button class="modal-close" onclick="closeModal('modal-evento')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg full" id="fg-ev-nombre">
+          <label>Nombre del evento <span class="req">*</span></label>
+          <input type="text" id="ev-nombre" placeholder="Ej: Asamblea General ANDI 2025">
+          <div class="err-msg">Ingrese el nombre del evento</div>
+        </div>
+        <div class="fg" id="fg-ev-fecha">
+          <label>Fecha <span class="req">*</span></label>
+          <input type="date" id="ev-fecha">
+          <div class="err-msg">Ingrese la fecha</div>
+        </div>
+        <div class="fg" id="fg-ev-tipo">
+          <label>Tipo de evento <span class="req">*</span></label>
+          <select id="ev-tipo">
+            <option value="">Seleccione...</option>
+            <option>Asamblea</option>
+            <option>Comité sectorial</option>
+            <option>Capacitación</option>
+            <option>Webinar</option>
+            <option>Rueda de negocios</option>
+            <option>Conferencia</option>
+            <option>Taller</option>
+          </select>
+          <div class="err-msg">Seleccione el tipo</div>
+        </div>
+        <div class="fg">
+          <label>Comité</label>
+          <input type="text" id="ev-comite" placeholder="Ej: Comité Jurídico">
+        </div>
+        <div class="fg">
+          <label>Lugar</label>
+          <input type="text" id="ev-lugar" placeholder="Ej: Medellín — Sede ANDI">
+        </div>
+        <div class="fg">
+          <label>Organizador</label>
+          <input type="text" id="ev-organizador" placeholder="Nombre del organizador">
+        </div>
+        <div class="fg" id="fg-ev-peso">
+          <label>Peso ponderación (1–5) <span class="req">*</span>
+            <span class="hint" style="font-weight:400"> — 1=webinar, 5=asamblea</span>
+          </label>
+          <select id="ev-peso">
+            <option value="">Seleccione...</option>
+            <option value="1">1 — Baja (webinar, informativo)</option>
+            <option value="2">2 — Media-baja (taller)</option>
+            <option value="3">3 — Media (comité, capacitación)</option>
+            <option value="4">4 — Alta (comité estratégico)</option>
+            <option value="5">5 — Máxima (asamblea general)</option>
+          </select>
+          <div class="err-msg">Seleccione el peso</div>
+        </div>
+        <div class="fg">
+          <label>Cupo máximo</label>
+          <input type="number" id="ev-cupo" placeholder="0 = ilimitado" min="0">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn" onclick="closeModal('modal-evento')">Cancelar</button>
+        <button class="btn btn-primary" onclick="crearEvento()">Crear evento</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Agregar Empresa -->
+<div class="modal-overlay" id="modal-empresa">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Agregar empresa afiliada</h3>
+      <button class="modal-close" onclick="closeModal('modal-empresa')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="fg" id="fg-emp-nit">
+          <label>NIT <span class="req">*</span></label>
+          <input type="text" id="emp-nit" placeholder="900123456-1">
+          <div class="err-msg">Ingrese el NIT</div>
+        </div>
+        <div class="fg" id="fg-emp-nombre">
+          <label>Nombre empresa <span class="req">*</span></label>
+          <input type="text" id="emp-nombre" placeholder="Razón social">
+          <div class="err-msg">Ingrese el nombre</div>
+        </div>
+        <div class="fg" id="fg-emp-sector">
+          <label>Sector <span class="req">*</span></label>
+          <select id="emp-sector">
+            <option value="">Seleccione...</option>
+            <option>Financiero</option><option>Manufactura</option><option>Energía</option>
+            <option>Alimentos</option><option>Tecnología</option><option>Salud</option>
+            <option>Comercio</option><option>Construcción</option><option>Logística</option>
+            <option>Textil</option><option>Metalurgia</option><option>Agro</option>
+          </select>
+          <div class="err-msg">Seleccione el sector</div>
+        </div>
+        <div class="fg">
+          <label>Estado</label>
+          <select id="emp-estado">
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn" onclick="closeModal('modal-empresa')">Cancelar</button>
+        <button class="btn btn-primary" onclick="crearEmpresa()">Agregar empresa</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// BASE DE DATOS EN MEMORIA
+// ══════════════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbzJ_WU8d2wJ4Y25wiql-4S_Tzcx2_a9KBWOuiCl7L7rFmiOFCxg73F8unqJSxLUz5Jc/exec';
+
+
+// ══════════════════════════════════════════════════════
+// UTILIDADES
+// ══════════════════════════════════════════════════════
+function ice(nit) {
+  const insEmp = DB.inscritos.filter(i => i.nit === nit);
+  if (!insEmp.length) return 0;
+  let pesoInsc = 0, pesoAsist = 0;
+  insEmp.forEach(ins => {
+    const ev = DB.eventos.find(e => e.id === ins.id_evento);
+    if (!ev) return;
+    const p = ev.peso;
+    pesoInsc += p;
+    const a = DB.asistencia.find(a => a.id_evento === ins.id_evento && a.cedula === ins.cedula);
+    if (a && a.asistio) pesoAsist += p;
+  });
+  if (pesoInsc === 0) return 0;
+  return Math.round((pesoAsist / pesoInsc) * 100);
+}
+
+function segmento(score) {
+  if (score >= 75) return 'Champions';
+  if (score >= 50) return 'Activa';
+  if (score >= 25) return 'En riesgo';
+  return 'Inactiva';
+}
+
+function badgeSeg(s) {
+  const map = { Champions:'badge-green', Activa:'badge-blue', 'En riesgo':'badge-amber', Inactiva:'badge-red' };
+  return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`;
+}
+
+function badgeEstado(e) {
+  const map = { Realizado:'badge-gray', Próximo:'badge-blue', 'En curso':'badge-green' };
+  return `<span class="badge ${map[e]||'badge-gray'}">${e}</span>`;
+}
+
+function fmtFecha(f) {
+  if (!f) return '—';
+  const [y,m,d] = f.split('-');
+  const meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  return `${d} ${meses[+m]} ${y}`;
+}
+
+function scoreColor(s) {
+  if (s >= 75) return '#166534';
+  if (s >= 50) return '#1E3A8A';
+  if (s >= 25) return '#92400E';
+  return '#991B1B';
+}
+
+function nextId(prefix) {
+  const existing = DB[prefix === 'EV' ? 'eventos' : prefix === 'I' ? 'inscritos' : 'asistencia'];
+  return prefix + String(existing.length + 1).padStart(3, '0');
+}
+
+function genQR() {
+  const cells = Array.from({length:64}, () => Math.random() > .5 ? '#1A3A2A' : 'transparent');
+  // corners
+  [0,1,2,3,4,5,6,7,8,15,16,23,24,31,32,39,40,47,48,56,57,58,59,60,61,62,63].forEach(i => cells[i] = '#1A3A2A');
+  return `<div class="qr-block">${cells.map(c=>`<div class="qr-cell" style="background:${c}"></div>`).join('')}</div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// NAVEGACIÓN
+// ══════════════════════════════════════════════════════
+const titles = {dashboard:'Dashboard',eventos:'Eventos',inscripcion:'Inscripción',asistencia:'Asistencia',empresas:'Empresas afiliadas',metricas:'Métricas ICE',alertas:'Alertas'};
+
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  else { document.querySelectorAll('.nav-item').forEach(n => { if (n.onclick && n.onclick.toString().includes("'" + id + "'")) n.classList.add('active'); }); }
+  document.getElementById('topbar-title').textContent = titles[id] || id;
+  refreshPage(id);
+}
+
+function refreshPage(id) {
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'eventos') { populateEventoSelect(); renderEventos(); }
+  if (id === 'inscripcion') { populateInsEventoSelect(); renderInscritos(); }
+  if (id === 'asistencia') { populateAsistEventoSelect(); renderAsistencia(); }
+  if (id === 'empresas') { populateSectorFilter(); renderEmpresas(); }
+  if (id === 'metricas') renderMetricas();
+  if (id === 'alertas') renderAlertas();
+}
+
+// ══════════════════════════════════════════════════════
+// MODALES
+// ══════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+// ══════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════
+function renderDashboard() {
+  const totalInsc = DB.inscritos.length;
+  const totalAsist = DB.asistencia.filter(a => a.asistio).length;
+  const totalPosAsist = DB.asistencia.length;
+  const pctGlobal = totalPosAsist ? Math.round((totalAsist/totalPosAsist)*100) : 0;
+
+  const scores = DB.empresas.map(e => ice(e.nit));
+  const avgIce = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+  const enRiesgo = scores.filter(s => s < 50).length;
+
+  document.getElementById('dash-metrics').innerHTML = `
+    <div class="metric"><div class="metric-label">ICE promedio</div><div class="metric-value metric-up">${avgIce}</div><div class="metric-sub">Índice de compromiso global</div></div>
+    <div class="metric"><div class="metric-label">% Asistencia global</div><div class="metric-value">${pctGlobal}%</div><div class="metric-sub">${totalAsist} de ${totalPosAsist} con registro</div></div>
+    <div class="metric"><div class="metric-label">Empresas afiliadas</div><div class="metric-value">${DB.empresas.length}</div><div class="metric-sub">${enRiesgo} en riesgo o inactivas</div></div>
+    <div class="metric"><div class="metric-label">Eventos registrados</div><div class="metric-value">${DB.eventos.length}</div><div class="metric-sub">${DB.eventos.filter(e=>e.estado==='Próximo').length} próximos</div></div>
+  `;
+
+  const proximos = DB.eventos.filter(e => e.estado === 'Próximo').slice(0,3);
+  document.getElementById('dash-proximos').innerHTML = proximos.length ? proximos.map(ev => `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--c-border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;">${ev.nombre}</div>
+        <div style="font-size:11px;color:var(--c-text-3);">${fmtFecha(ev.fecha)} · ${ev.tipo}</div>
+      </div>
+      <span class="tag">×${ev.peso}</span>
+    </div>`).join('') : '<div class="empty"><p>Sin eventos próximos</p></div>';
+
+  const tipos = [...new Set(DB.eventos.map(e=>e.tipo))];
+  document.getElementById('dash-tipos').innerHTML = tipos.map(t => {
+    const evs = DB.eventos.filter(e=>e.tipo===t).map(e=>e.id);
+    const insT = DB.asistencia.filter(a => evs.includes(a.id_evento));
+    const pct = insT.length ? Math.round(insT.filter(a=>a.asistio).length/insT.length*100) : 0;
+    return `<div class="asist-row">
+      <div style="width:150px;font-size:12px;color:var(--c-text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t}</div>
+      <div class="asist-bar-bg"><div class="asist-bar-fill" style="width:${pct}%;background:${scoreColor(pct)}"></div></div>
+      <div style="width:34px;text-align:right;font-size:12px;font-weight:500;">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  const sorted = DB.empresas.map(e => ({...e, score:ice(e.nit), inscritos:DB.inscritos.filter(i=>i.nit===e.nit).length}))
+    .sort((a,b)=>b.score-a.score).slice(0,6);
+  document.getElementById('dash-empresas').innerHTML = sorted.map(e => `
+    <tr>
+      <td class="td-name">${e.nombre}</td>
+      <td><span class="badge badge-gray">${e.sector}</span></td>
+      <td>
+        <div class="score-wrap">
+          <span style="font-weight:500;color:${scoreColor(e.score)};min-width:28px;">${e.score}</span>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:${e.score}%;background:${scoreColor(e.score)}"></div></div>
+        </div>
+      </td>
+      <td>${e.inscritos}</td>
+      <td>${badgeSeg(segmento(e.score))}</td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// EVENTOS
+// ══════════════════════════════════════════════════════
+function populateEventoSelect() {
+  const s = document.getElementById('ins-evento');
+  if (!s) return;
+  s.innerHTML = '<option value="">Seleccione un evento...</option>' +
+    DB.eventos.map(e=>`<option value="${e.id}">${e.nombre} — ${fmtFecha(e.fecha)}</option>`).join('');
+}
+
+function renderEventos() {
+  const q = (document.getElementById('search-eventos')?.value||'').toLowerCase();
+  const est = document.getElementById('filter-estado-ev')?.value||'';
+  let evs = DB.eventos.filter(e =>
+    (!q || e.nombre.toLowerCase().includes(q) || e.tipo.toLowerCase().includes(q)) &&
+    (!est || e.estado === est)
+  );
+  const insCount = id => DB.inscritos.filter(i=>i.id_evento===id).length;
+  const asistPct = id => {
+    const a = DB.asistencia.filter(x=>x.id_evento===id);
+    if (!a.length) return '—';
+    return Math.round(a.filter(x=>x.asistio).length/a.length*100)+'%';
+  };
+  document.getElementById('tabla-eventos').innerHTML = evs.length ? evs.map(ev=>`
+    <tr>
+      <td class="td-name">${ev.nombre}</td>
+      <td>${fmtFecha(ev.fecha)}</td>
+      <td><span class="badge badge-gray">${ev.tipo}</span></td>
+      <td style="color:var(--c-text-2)">${ev.comite||'—'}</td>
+      <td><span class="tag">×${ev.peso}</span></td>
+      <td>${insCount(ev.id)}</td>
+      <td>${asistPct(ev.id)}</td>
+      <td>${badgeEstado(ev.estado)}</td>
+      <td><button class="btn btn-sm" onclick="verAsistenciaEvento('${ev.id}')">Check-in</button></td>
+    </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--c-text-3)">No hay eventos</td></tr>';
+}
+
+function crearEvento() {
+  const fields = [
+    {id:'fg-ev-nombre',val:()=>document.getElementById('ev-nombre').value.trim()},
+    {id:'fg-ev-fecha',val:()=>document.getElementById('ev-fecha').value},
+    {id:'fg-ev-tipo',val:()=>document.getElementById('ev-tipo').value},
+    {id:'fg-ev-peso',val:()=>document.getElementById('ev-peso').value},
+  ];
+  let ok = true;
+  fields.forEach(f => {
+    const g = document.getElementById(f.id);
+    const v = f.val();
+    g.classList.toggle('err', !v);
+    if (!v) ok = false;
+  });
+  if (!ok) return;
+  const ev = {
+    id: 'EV' + String(DB.eventos.length+1).padStart(3,'0'),
+    nombre: document.getElementById('ev-nombre').value.trim(),
+    fecha: document.getElementById('ev-fecha').value,
+    tipo: document.getElementById('ev-tipo').value,
+    comite: document.getElementById('ev-comite').value,
+    lugar: document.getElementById('ev-lugar').value,
+    organizador: document.getElementById('ev-organizador').value,
+    peso: parseInt(document.getElementById('ev-peso').value),
+    cupo: parseInt(document.getElementById('ev-cupo').value)||0,
+    estado: 'Próximo'
+  };
+  DB.eventos.unshift(ev);
+  closeModal('modal-evento');
+  ['ev-nombre','ev-fecha','ev-comite','ev-lugar','ev-organizador','ev-cupo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ev-tipo').value=''; document.getElementById('ev-peso').value='';
+  renderEventos();
+  populateEventoSelect();
+  populateAsistEventoSelect();
+}
+
+function verAsistenciaEvento(id) {
+  showPage('asistencia', null);
+  setTimeout(()=>{
+    document.getElementById('asist-evento-sel').value = id;
+    renderAsistencia();
+  },50);
+}
+
+// ══════════════════════════════════════════════════════
+// INSCRIPCIÓN
+// ══════════════════════════════════════════════════════
+let insStep = 1;
+
+function populateInsEventoSelect() {
+  const s = document.getElementById('ins-evento');
+  if (!s) return;
+  s.innerHTML = '<option value="">Seleccione un evento...</option>' +
+    DB.eventos.map(e=>`<option value="${e.id}">${e.nombre} — ${fmtFecha(e.fecha)}</option>`).join('');
+}
+
+function buscarEmpresa() {
+  const nit = document.getElementById('ins-nit').value.replace(/[^0-9]/g,'');
+  const match = DB.empresas.find(e => e.nit.replace(/[^0-9]/g,'') === nit);
+  const box = document.getElementById('empresa-match');
+  if (match) {
+    document.getElementById('ins-empresa').value = match.nombre;
+    box.style.display = 'block';
+    box.innerHTML = `Empresa encontrada: <strong>${match.nombre}</strong> — ${match.sector} · ${match.estado}`;
+  } else { box.style.display = 'none'; }
+}
+
+function insNext(step) {
+  if (step === 2) {
+    const v = document.getElementById('ins-evento').value;
+    document.getElementById('fg-ins-evento').classList.toggle('err', !v);
+    if (!v) return;
+  }
+  if (step === 3) {
+    const fields = [
+      {id:'fg-ins-nit',val:()=>document.getElementById('ins-nit').value.trim()},
+      {id:'fg-ins-empresa',val:()=>document.getElementById('ins-empresa').value.trim()},
+    ];
+    let ok = true;
+    fields.forEach(f=>{ const g=document.getElementById(f.id); const v=f.val(); g.classList.toggle('err',!v); if(!v)ok=false; });
+    if (!ok) return;
+  }
+  if (step === 4) {
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const fields = [
+      {id:'fg-ins-cedula',val:()=>document.getElementById('ins-cedula').value.trim()},
+      {id:'fg-ins-nombre',val:()=>document.getElementById('ins-nombre').value.trim()},
+      {id:'fg-ins-cargo',val:()=>document.getElementById('ins-cargo').value.trim()},
+      {id:'fg-ins-cel',val:()=>document.getElementById('ins-cel').value.trim()},
+      {id:'fg-ins-email',val:()=>{ const v=document.getElementById('ins-email').value.trim(); return emailRe.test(v)?v:''; }},
+    ];
+    let ok = true;
+    fields.forEach(f=>{ const g=document.getElementById(f.id); const v=f.val(); g.classList.toggle('err',!v); if(!v)ok=false; });
+    const trat = document.getElementById('ins-trat').checked;
+    document.getElementById('err-trat').style.display = trat ? 'none':'block';
+    if (!trat) ok = false;
+    if (!ok) return;
+    fillInsResumen();
+  }
+  for (let i=1;i<=4;i++) document.getElementById('ins-s'+i).style.display = 'none';
+  document.getElementById('ins-ok').style.display = 'none';
+  document.getElementById('ins-s'+step).style.display = 'block';
+  insStep = step;
+  updateInsStepBar(step);
+}
+
+function updateInsStepBar(step) {
+  for (let i=1;i<=4;i++) {
+    const sc = document.getElementById('isc'+i);
+    const sl = document.getElementById('isl'+i);
+    sc.className = 'step-circle';
+    sl.className = 'step-label-txt';
+    if (i < step) { sc.classList.add('done'); sc.textContent='✓'; }
+    else if (i === step) { sc.classList.add('active'); sc.textContent=i; sl.classList.add('active'); }
+    else { sc.textContent=i; }
+  }
+}
+
+function fillInsResumen() {
+  const evId = document.getElementById('ins-evento').value;
+  const ev = DB.eventos.find(e=>e.id===evId);
+  document.getElementById('ins-resumen').innerHTML = `
+    <div class="confirm-row"><span>Evento</span><span>${ev?ev.nombre:'—'}</span></div>
+    <div class="confirm-row"><span>NIT empresa</span><span>${document.getElementById('ins-nit').value}</span></div>
+    <div class="confirm-row"><span>Empresa</span><span>${document.getElementById('ins-empresa').value}</span></div>
+    <div class="confirm-row"><span>Cédula</span><span>${document.getElementById('ins-cedula').value}</span></div>
+    <div class="confirm-row"><span>Nombre</span><span>${document.getElementById('ins-nombre').value}</span></div>
+    <div class="confirm-row"><span>Cargo</span><span>${document.getElementById('ins-cargo').value}</span></div>
+    <div class="confirm-row"><span>Email</span><span>${document.getElementById('ins-email').value}</span></div>
+    <div class="confirm-row"><span>Celular</span><span>${document.getElementById('ins-cel').value}</span></div>
+    <div class="confirm-row"><span>Tratamiento datos</span><span style="color:var(--c-green)">Autorizado</span></div>
+  `;
+}
+
+function confirmarInscripcion() {
+  const evId = document.getElementById('ins-evento').value;
+  const ev = DB.eventos.find(e=>e.id===evId);
+  const cedula = document.getElementById('ins-cedula').value.trim();
+  const dup = DB.inscritos.find(i=>i.id_evento===evId&&i.cedula===cedula);
+  if (dup) { alert('Este participante ya está inscrito en este evento.'); return; }
+  const ins = {
+    id: 'I'+String(DB.inscritos.length+1).padStart(3,'0'),
+    id_evento: evId,
+    nit: document.getElementById('ins-nit').value.trim(),
+    empresa: document.getElementById('ins-empresa').value.trim(),
+    cedula,
+    nombre: document.getElementById('ins-nombre').value.trim(),
+    cargo: document.getElementById('ins-cargo').value.trim(),
+    email: document.getElementById('ins-email').value.trim(),
+    celular: document.getElementById('ins-cel').value.trim(),
+    trat: document.getElementById('ins-trat').checked ? 'Sí':'No',
+    fecha: new Date().toISOString().split('T')[0]
+  };
+  DB.inscritos.push(ins);
+  DB.asistencia.push({ id_evento: evId, cedula, asistio: false, hora: null });
+  document.getElementById('ins-s4').style.display='none';
+  document.getElementById('ins-ok').style.display='block';
+  document.getElementById('ins-ok-data').innerHTML = `
+    <div class="confirm-row"><span>Nombre</span><span>${ins.nombre}</span></div>
+    <div class="confirm-row"><span>Evento</span><span>${ev?ev.nombre:'—'}</span></div>
+    <div class="confirm-row"><span>Código</span><span class="mono">${ins.id}-${evId}</span></div>
+  `;
+  document.getElementById('qr-display').innerHTML = genQR();
+  renderInscritos();
+}
+
+function resetInscripcion() {
+  ['ins-nit','ins-empresa','ins-cedula','ins-nombre','ins-cargo','ins-cel','ins-email'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('ins-trat').checked=false;
+  document.getElementById('ins-evento').value='';
+  document.getElementById('empresa-match').style.display='none';
+  document.getElementById('ins-ok').style.display='none';
+  document.getElementById('ins-s1').style.display='block';
+  insStep=1; updateInsStepBar(1);
+}
+
+function renderInscritos() {
+  const rows = [...DB.inscritos].reverse().slice(0,20);
+  document.getElementById('ins-count-badge').textContent = DB.inscritos.length;
+  document.getElementById('tabla-inscritos').innerHTML = rows.map(i=>`
+    <tr>
+      <td class="td-name">${i.nombre}<br><span style="font-size:11px;color:var(--c-text-3);">${i.cargo}</span></td>
+      <td>${i.empresa}</td>
+      <td style="font-size:12px;color:var(--c-text-2)">${DB.eventos.find(e=>e.id===i.id_evento)?.nombre||i.id_evento}</td>
+      <td>${i.trat==='Sí'?'<span class="badge badge-green">Sí</span>':'<span class="badge badge-red">No</span>'}</td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// ASISTENCIA
+// ══════════════════════════════════════════════════════
+function populateAsistEventoSelect() {
+  const s = document.getElementById('asist-evento-sel');
+  if (!s) return;
+  const cur = s.value;
+  s.innerHTML = '<option value="">— Seleccione un evento —</option>' +
+    DB.eventos.map(e=>`<option value="${e.id}">${e.nombre} — ${fmtFecha(e.fecha)}</option>`).join('');
+  if (cur) s.value = cur;
+}
+
+function renderAsistencia() {
+  const evId = document.getElementById('asist-evento-sel')?.value;
+  const q = (document.getElementById('search-asist')?.value||'').toLowerCase();
+  if (!evId) {
+    document.getElementById('tabla-asistencia').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--c-text-3)">Seleccione un evento para ver los inscritos</td></tr>';
+    document.getElementById('asist-ins').textContent='0';
+    document.getElementById('asist-pres').textContent='0';
+    document.getElementById('asist-pct').textContent='0%';
+    document.getElementById('asist-por-empresa').innerHTML='';
+    return;
+  }
+  let inscritos = DB.inscritos.filter(i=>i.id_evento===evId);
+  if (q) inscritos = inscritos.filter(i=>i.nombre.toLowerCase().includes(q)||i.empresa.toLowerCase().includes(q));
+  const presentes = inscritos.filter(i => {
+    const a = DB.asistencia.find(a=>a.id_evento===evId&&a.cedula===i.cedula);
+    return a && a.asistio;
+  }).length;
+  document.getElementById('asist-ins').textContent = inscritos.length;
+  document.getElementById('asist-pres').textContent = presentes;
+  document.getElementById('asist-pct').textContent = inscritos.length ? Math.round(presentes/inscritos.length*100)+'%' : '0%';
+
+  document.getElementById('tabla-asistencia').innerHTML = inscritos.length ? inscritos.map(i=>{
+    const a = DB.asistencia.find(a=>a.id_evento===evId&&a.cedula===i.cedula);
+    const pres = a && a.asistio;
+    return `<tr>
+      <td>
+        <div class="checkin-status ${pres?'present':'absent'}" onclick="toggleAsist('${evId}','${i.cedula}')" title="${pres?'Marcar ausente':'Marcar presente'}">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+      </td>
+      <td class="td-name">${i.nombre}</td>
+      <td>${i.empresa}</td>
+      <td style="color:var(--c-text-2)">${i.cargo}</td>
+      <td class="mono">${pres&&a.hora?a.hora:'—'}</td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--c-text-3)">No hay inscritos para este evento</td></tr>';
+
+  const empresasEv = [...new Set(inscritos.map(i=>i.empresa))];
+  document.getElementById('asist-por-empresa').innerHTML = empresasEv.length ? empresasEv.map(emp=>{
+    const empIns = inscritos.filter(i=>i.empresa===emp);
+    const empPres = empIns.filter(i=>{ const a=DB.asistencia.find(a=>a.id_evento===evId&&a.cedula===i.cedula); return a&&a.asistio; }).length;
+    const pct = empIns.length ? Math.round(empPres/empIns.length*100) : 0;
+    return `<div class="asist-row">
+      <div style="width:140px;font-size:12px;color:var(--c-text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${emp}">${emp}</div>
+      <div class="asist-bar-bg"><div class="asist-bar-fill" style="width:${pct}%;background:${scoreColor(pct)}"></div></div>
+      <div style="width:48px;text-align:right;font-size:12px;">${empPres}/${empIns.length}</div>
+    </div>`;
+  }).join('') : '<p style="font-size:13px;color:var(--c-text-3)">Sin inscritos</p>';
+}
+
+function toggleAsist(evId, cedula) {
+  let a = DB.asistencia.find(a=>a.id_evento===evId&&a.cedula===cedula);
+  if (!a) { a = {id_evento:evId,cedula,asistio:false,hora:null}; DB.asistencia.push(a); }
+  a.asistio = !a.asistio;
+  a.hora = a.asistio ? (new Date().getHours().toString().padStart(2,'0')+':'+new Date().getMinutes().toString().padStart(2,'0')) : null;
+  renderAsistencia();
+}
+
+function simQR() {
+  const evId = document.getElementById('asist-evento-sel')?.value;
+  if (!evId) { alert('Seleccione un evento primero'); return; }
+  const ausentes = DB.inscritos.filter(i=>{
+    if (i.id_evento!==evId) return false;
+    const a=DB.asistencia.find(a=>a.id_evento===evId&&a.cedula===i.cedula);
+    return !a||!a.asistio;
+  });
+  if (!ausentes.length) { alert('Todos los inscritos ya fueron marcados'); return; }
+  const r = ausentes[Math.floor(Math.random()*ausentes.length)];
+  toggleAsist(evId, r.cedula);
+}
+
+function marcarTodos() {
+  const evId = document.getElementById('asist-evento-sel')?.value;
+  if (!evId) { alert('Seleccione un evento primero'); return; }
+  const hora = new Date().getHours().toString().padStart(2,'0')+':'+new Date().getMinutes().toString().padStart(2,'0');
+  DB.inscritos.filter(i=>i.id_evento===evId).forEach(i=>{
+    let a=DB.asistencia.find(a=>a.id_evento===evId&&a.cedula===i.cedula);
+    if (!a) { a={id_evento:evId,cedula:i.cedula,asistio:false,hora:null}; DB.asistencia.push(a); }
+    a.asistio=true; a.hora=hora;
+  });
+  renderAsistencia();
+}
+
+function resetAsistencia() {
+  const evId = document.getElementById('asist-evento-sel')?.value;
+  if (!evId) return;
+  DB.asistencia.filter(a=>a.id_evento===evId).forEach(a=>{a.asistio=false;a.hora=null;});
+  renderAsistencia();
+}
+
+// ══════════════════════════════════════════════════════
+// EMPRESAS
+// ══════════════════════════════════════════════════════
+function populateSectorFilter() {
+  const sectores = [...new Set(DB.empresas.map(e=>e.sector))].sort();
+  const s = document.getElementById('filter-sector');
+  if (!s) return;
+  s.innerHTML = '<option value="">Todos los sectores</option>' + sectores.map(s=>`<option>${s}</option>`).join('');
+}
+
+function renderEmpresas() {
+  const q = (document.getElementById('search-empresas')?.value||'').toLowerCase();
+  const seg = document.getElementById('filter-seg')?.value||'';
+  const sec = document.getElementById('filter-sector')?.value||'';
+  const empresas = DB.empresas.map(e => ({...e, score:ice(e.nit), ins:DB.inscritos.filter(i=>i.nit===e.nit).length, asist:DB.asistencia.filter(a=>{
+    const ins=DB.inscritos.find(i=>i.cedula===a.cedula&&i.nit===e.nit&&i.id_evento===a.id_evento); return ins&&a.asistio;
+  }).length})).filter(e =>
+    (!q || e.nombre.toLowerCase().includes(q) || e.nit.includes(q)) &&
+    (!seg || segmento(e.score)===seg) &&
+    (!sec || e.sector===sec)
+  ).sort((a,b)=>b.score-a.score);
+
+  document.getElementById('tabla-empresas').innerHTML = empresas.length ? empresas.map(e=>`
+    <tr>
+      <td class="mono">${e.nit}</td>
+      <td class="td-name">${e.nombre}</td>
+      <td><span class="badge badge-gray">${e.sector}</span></td>
+      <td>${e.estado==='Activo'?'<span class="badge badge-green">Activo</span>':'<span class="badge badge-red">Inactivo</span>'}</td>
+      <td>
+        <div class="score-wrap">
+          <span style="font-weight:500;color:${scoreColor(e.score)};min-width:28px;">${e.score}</span>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:${e.score}%;background:${scoreColor(e.score)}"></div></div>
+        </div>
+      </td>
+      <td>${e.ins}</td>
+      <td>${e.asist}</td>
+      <td>${badgeSeg(segmento(e.score))}</td>
+    </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--c-text-3)">No hay empresas</td></tr>';
+}
+
+function crearEmpresa() {
+  const fields = [
+    {id:'fg-emp-nit',val:()=>document.getElementById('emp-nit').value.trim()},
+    {id:'fg-emp-nombre',val:()=>document.getElementById('emp-nombre').value.trim()},
+    {id:'fg-emp-sector',val:()=>document.getElementById('emp-sector').value},
+  ];
+  let ok=true;
+  fields.forEach(f=>{ const g=document.getElementById(f.id); const v=f.val(); g.classList.toggle('err',!v); if(!v)ok=false; });
+  if(!ok) return;
+  const dup = DB.empresas.find(e=>e.nit===document.getElementById('emp-nit').value.trim());
+  if(dup){alert('Ya existe una empresa con ese NIT');return;}
+  DB.empresas.push({
+    nit:document.getElementById('emp-nit').value.trim(),
+    nombre:document.getElementById('emp-nombre').value.trim(),
+    sector:document.getElementById('emp-sector').value,
+    estado:document.getElementById('emp-estado').value
+  });
+  closeModal('modal-empresa');
+  ['emp-nit','emp-nombre'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('emp-sector').value='';
+  renderEmpresas(); populateSectorFilter();
+}
+
+// ══════════════════════════════════════════════════════
+// MÉTRICAS
+// ══════════════════════════════════════════════════════
+function renderMetricas() {
+  const tipos = [
+    {label:'Asamblea',peso:5},{label:'Comité/Rueda',peso:'3-4'},{label:'Capacitación',peso:3},
+    {label:'Taller',peso:2},{label:'Webinar',peso:1}
+  ];
+  document.getElementById('peso-legend').innerHTML = tipos.map(t=>`
+    <div style="background:var(--c-bg);border-radius:var(--radius);padding:10px 12px;text-align:center;">
+      <div style="font-size:18px;font-weight:300;color:var(--c-accent);">×${t.peso}</div>
+      <div style="font-size:11px;color:var(--c-text-3);margin-top:3px;">${t.label}</div>
+    </div>`).join('');
+
+  const segs = ['Champions','Activa','En riesgo','Inactiva'];
+  const segColors = {'Champions':'#166534','Activa':'#1E3A8A','En riesgo':'#92400E','Inactiva':'#991B1B'};
+  const segData = segs.map(s=>({seg:s,count:DB.empresas.filter(e=>segmento(ice(e.nit))===s).length}));
+  const total = DB.empresas.length;
+  document.getElementById('seg-dist').innerHTML = segData.map(s=>`
+    <div class="asist-row">
+      <div style="width:90px;font-size:12px;color:${segColors[s.seg]};font-weight:500;">${s.seg}</div>
+      <div class="asist-bar-bg"><div class="asist-bar-fill" style="width:${total?Math.round(s.count/total*100):0}%;background:${segColors[s.seg]}"></div></div>
+      <div style="width:40px;text-align:right;font-size:12px;">${s.count}</div>
+    </div>`).join('');
+
+  const sectores = [...new Set(DB.empresas.map(e=>e.sector))];
+  document.getElementById('sector-asist').innerHTML = sectores.map(sec=>{
+    const emps = DB.empresas.filter(e=>e.sector===sec);
+    const avg = emps.length ? Math.round(emps.reduce((a,e)=>a+ice(e.nit),0)/emps.length) : 0;
+    return `<div class="asist-row">
+      <div style="width:110px;font-size:12px;color:var(--c-text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${sec}</div>
+      <div class="asist-bar-bg"><div class="asist-bar-fill" style="width:${avg}%;background:${scoreColor(avg)}"></div></div>
+      <div style="width:34px;text-align:right;font-size:12px;font-weight:500;">${avg}</div>
+    </div>`;
+  }).join('');
+
+  const ranked = DB.empresas.map(e=>{
+    const insEmp = DB.inscritos.filter(i=>i.nit===e.nit);
+    let pesoInsc=0,pesoAsist=0,nAsist=0;
+    insEmp.forEach(ins=>{
+      const ev=DB.eventos.find(x=>x.id===ins.id_evento);
+      if(!ev)return;
+      pesoInsc+=ev.peso;
+      const a=DB.asistencia.find(a=>a.id_evento===ins.id_evento&&a.cedula===ins.cedula);
+      if(a&&a.asistio){pesoAsist+=ev.peso;nAsist++;}
+    });
+    return {...e,insCount:insEmp.length,pesoInsc,pesoAsist,nAsist,score:ice(e.nit)};
+  }).sort((a,b)=>b.score-a.score);
+
+  document.getElementById('tabla-ice').innerHTML = ranked.map((e,i)=>`
+    <tr>
+      <td style="color:var(--c-text-3);font-weight:500;">${i+1}</td>
+      <td class="td-name">${e.nombre}</td>
+      <td><span class="badge badge-gray">${e.sector}</span></td>
+      <td>${e.insCount}</td>
+      <td>${e.pesoInsc}</td>
+      <td>${e.nAsist}</td>
+      <td>${e.pesoAsist}</td>
+      <td>
+        <div class="score-wrap">
+          <span style="font-weight:500;color:${scoreColor(e.score)};min-width:32px;">${e.score}</span>
+          <div class="score-bar-bg"><div class="score-bar-fill" style="width:${e.score}%;background:${scoreColor(e.score)}"></div></div>
+        </div>
+      </td>
+      <td>${badgeSeg(segmento(e.score))}</td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// ALERTAS
+// ══════════════════════════════════════════════════════
+function renderAlertas() {
+  const cero = DB.empresas.filter(e=>{
+    const ins=DB.inscritos.filter(i=>i.nit===e.nit);
+    if(!ins.length)return false;
+    return ins.every(i=>{ const a=DB.asistencia.find(a=>a.id_evento===i.id_evento&&a.cedula===i.cedula); return !a||!a.asistio; });
+  });
+  const sinInsc = DB.empresas.filter(e=>DB.inscritos.filter(i=>i.nit===e.nit).length===0);
+  const bajoIce = DB.empresas.filter(e=>ice(e.nit)<25&&DB.inscritos.filter(i=>i.nit===e.nit).length>0);
+  const sinTrat = DB.inscritos.filter(i=>i.trat==='No');
+
+  document.getElementById('alertas-criticas').innerHTML = `
+    <div class="alert alert-red"><div class="alert-dot alert-dot-red"></div><div>
+      <strong>${cero.length} empresa(s) con 0% asistencia</strong><br>
+      <span style="font-size:12px">${cero.map(e=>e.nombre).join(', ')||'Ninguna'}</span>
+    </div></div>
+    <div class="alert alert-red"><div class="alert-dot alert-dot-red"></div><div>
+      <strong>${sinInsc.length} empresa(s) sin inscripciones</strong><br>
+      <span style="font-size:12px">${sinInsc.map(e=>e.nombre).join(', ')||'Ninguna'}</span>
+    </div></div>
+    <div class="alert alert-red"><div class="alert-dot alert-dot-red"></div><div>
+      <strong>${bajoIce.length} empresa(s) con ICE crítico (&lt;25)</strong><br>
+      <span style="font-size:12px">${bajoIce.map(e=>e.nombre).join(', ')||'Ninguna'}</span>
+    </div></div>
+  `;
+
+  const sinTratEmp = [...new Set(sinTrat.map(i=>i.empresa))];
+  document.getElementById('alertas-atencion').innerHTML = `
+    <div class="alert alert-amber"><div class="alert-dot alert-dot-amber"></div><div>
+      <strong>${sinTrat.length} inscripcion(es) sin autorización de datos</strong><br>
+      <span style="font-size:12px">${sinTratEmp.join(', ')||'Ninguna'}</span>
+    </div></div>
+    <div class="alert alert-amber"><div class="alert-dot alert-dot-amber"></div><div>
+      <strong>${DB.empresas.filter(e=>segmento(ice(e.nit))==='En riesgo').length} empresa(s) en riesgo (ICE 25–49)</strong><br>
+      <span style="font-size:12px">Se recomienda contacto preventivo del ejecutivo de cuenta</span>
+    </div></div>
+    <div class="alert alert-green"><div class="alert-dot alert-dot-green"></div><div>
+      <strong>${DB.empresas.filter(e=>segmento(ice(e.nit))==='Champions').length} empresa(s) Champions (ICE ≥75)</strong><br>
+      <span style="font-size:12px">Candidatas a reconocimiento y contenido exclusivo</span>
+    </div></div>
+  `;
+
+  const segs = [
+    {s:'Champions',min:75,max:100,accion:'Reconocimiento, contenido exclusivo, invitación VIP'},
+    {s:'Activa',min:50,max:74,accion:'Mantener engagement, invitaciones prioritarias'},
+    {s:'En riesgo',min:25,max:49,accion:'Llamada de seguimiento, agenda personalizada'},
+    {s:'Inactiva',min:0,max:24,accion:'Visita presencial, plan de reactivación urgente'},
+  ];
+  document.getElementById('tabla-segmentos').innerHTML = segs.map(seg=>{
+    const count = DB.empresas.filter(e=>segmento(ice(e.nit))===seg.s).length;
+    return `<tr>
+      <td>${badgeSeg(seg.s)}</td>
+      <td>ICE ${seg.min}–${seg.max}</td>
+      <td><strong>${count}</strong></td>
+      <td>${total?Math.round(count/DB.empresas.length*100):0}%</td>
+      <td style="color:var(--c-text-2)">${seg.accion}</td>
+    </tr>`;
+  }).join('');
+
+  const accion = DB.empresas.map(e=>({...e,score:ice(e.nit)}))
+    .filter(e=>e.score<50).sort((a,b)=>a.score-b.score).slice(0,8);
+  document.getElementById('tabla-accion').innerHTML = accion.map(e=>`
+    <tr>
+      <td class="td-name">${e.nombre}</td>
+      <td><span class="badge badge-gray">${e.sector}</span></td>
+      <td><span style="font-weight:500;color:${scoreColor(e.score)}">${e.score}</span></td>
+      <td style="color:var(--c-text-3)">—</td>
+      <td>${badgeSeg(segmento(e.score))}</td>
+      <td>${e.score<25?'<span class="badge badge-red">Visita presencial</span>':'<span class="badge badge-amber">Contacto ejecutivo</span>'}</td>
+    </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+
+let DB = { empresas:[], eventos:[], inscritos:[], asistencia:[] };
+
+async function apiGet(action) {
+  const res = await fetch(`${API_URL}?action=${action}`);
+  return (await res.json()).data;
+}
+
+async function apiPost(action, data) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action, data })
+  });
+  return (await res.json()).data;
+}
+
+async function cargarDatos() {
+  document.getElementById('loader').style.display = 'flex';
+  DB = await apiGet('getAll');
+  DB.asistencia = DB.asistencia.map(a =>
+    ({...a, asistio: a.asistio === true || a.asistio === 'TRUE'}));
+  renderDashboard();
+  document.getElementById('loader').style.display = 'none';
+}
+
+
+document.addEventListener('DOMContentLoaded', cargarDatos);
+</script>
+</body>
+</html>
+
