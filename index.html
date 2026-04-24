@@ -1177,36 +1177,42 @@ function fillInsResumen() {
   `;
 }
 
-function confirmarInscripcion() {
-  const evId = document.getElementById('ins-evento').value;
-  const ev = DB.eventos.find(e=>e.id===evId);
+async function confirmarInscripcion() {
+  const evId   = document.getElementById('ins-evento').value;
+  const ev     = DB.eventos.find(e => e.id === evId);
   const cedula = document.getElementById('ins-cedula').value.trim();
-  const dup = DB.inscritos.find(i=>i.id_evento===evId&&i.cedula===cedula);
-  if (dup) { alert('Este participante ya está inscrito en este evento.'); return; }
-  const ins = {
-    id: 'I'+String(DB.inscritos.length+1).padStart(3,'0'),
+
+  const payload = {
     id_evento: evId,
-    nit: document.getElementById('ins-nit').value.trim(),
-    empresa: document.getElementById('ins-empresa').value.trim(),
+    nit:       document.getElementById('ins-nit').value.trim(),
+    empresa:   document.getElementById('ins-empresa').value.trim(),
     cedula,
-    nombre: document.getElementById('ins-nombre').value.trim(),
-    cargo: document.getElementById('ins-cargo').value.trim(),
-    email: document.getElementById('ins-email').value.trim(),
-    celular: document.getElementById('ins-cel').value.trim(),
-    trat: document.getElementById('ins-trat').checked ? 'Sí':'No',
-    fecha: new Date().toISOString().split('T')[0]
+    nombre:    document.getElementById('ins-nombre').value.trim(),
+    cargo:     document.getElementById('ins-cargo').value.trim(),
+    email:     document.getElementById('ins-email').value.trim(),
+    celular:   document.getElementById('ins-cel').value.trim(),
+    trat:      document.getElementById('ins-trat').checked ? 'Sí' : 'No'
   };
-  DB.inscritos.push(ins);
-  DB.asistencia.push({ id_evento: evId, cedula, asistio: false, hora: null });
-  document.getElementById('ins-s4').style.display='none';
-  document.getElementById('ins-ok').style.display='block';
-  document.getElementById('ins-ok-data').innerHTML = `
-    <div class="confirm-row"><span>Nombre</span><span>${ins.nombre}</span></div>
-    <div class="confirm-row"><span>Evento</span><span>${ev?ev.nombre:'—'}</span></div>
-    <div class="confirm-row"><span>Código</span><span class="mono">${ins.id}-${evId}</span></div>
-  `;
-  document.getElementById('qr-display').innerHTML = genQR();
-  renderInscritos();
+
+  try {
+    const result = await apiPost('inscribir', payload);
+
+    await cargarDatos();
+
+    document.getElementById('ins-s4').style.display = 'none';
+    document.getElementById('ins-ok').style.display = 'block';
+    document.getElementById('ins-ok-data').innerHTML = `
+      <div class="confirm-row"><span>Nombre</span><span>${payload.nombre}</span></div>
+      <div class="confirm-row"><span>Empresa</span><span>${payload.empresa}</span></div>
+      <div class="confirm-row"><span>Evento</span><span>${ev ? ev.nombre : evId}</span></div>
+      <div class="confirm-row"><span>Código</span><span class="mono">${result.id}</span></div>
+    `;
+    document.getElementById('qr-display').innerHTML = genQR();
+    renderInscritos();
+
+  } catch(e) {
+    alert('Error al inscribir: ' + e.message);
+  }
 }
 
 function resetInscripcion() {
