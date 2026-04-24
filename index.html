@@ -1368,27 +1368,43 @@ function renderEmpresas() {
     </tr>`).join('') : '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--c-text-3)">No hay empresas</td></tr>';
 }
 
-function crearEmpresa() {
+async function crearEmpresa() {
   const fields = [
-    {id:'fg-emp-nit',val:()=>document.getElementById('emp-nit').value.trim()},
-    {id:'fg-emp-nombre',val:()=>document.getElementById('emp-nombre').value.trim()},
-    {id:'fg-emp-sector',val:()=>document.getElementById('emp-sector').value},
+    {id:'fg-emp-nit',    val:()=>document.getElementById('emp-nit').value.trim()},
+    {id:'fg-emp-nombre', val:()=>document.getElementById('emp-nombre').value.trim()},
+    {id:'fg-emp-sector', val:()=>document.getElementById('emp-sector').value},
   ];
-  let ok=true;
-  fields.forEach(f=>{ const g=document.getElementById(f.id); const v=f.val(); g.classList.toggle('err',!v); if(!v)ok=false; });
-  if(!ok) return;
-  const dup = DB.empresas.find(e=>e.nit===document.getElementById('emp-nit').value.trim());
-  if(dup){alert('Ya existe una empresa con ese NIT');return;}
-  DB.empresas.push({
-    nit:document.getElementById('emp-nit').value.trim(),
-    nombre:document.getElementById('emp-nombre').value.trim(),
-    sector:document.getElementById('emp-sector').value,
-    estado:document.getElementById('emp-estado').value
+  let ok = true;
+  fields.forEach(f => {
+    const g = document.getElementById(f.id);
+    const v = f.val();
+    g.classList.toggle('err', !v);
+    if (!v) ok = false;
   });
-  closeModal('modal-empresa');
-  ['emp-nit','emp-nombre'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('emp-sector').value='';
-  renderEmpresas(); populateSectorFilter();
+  if (!ok) return;
+
+  const nit = document.getElementById('emp-nit').value.trim();
+  const dup = DB.empresas.find(e => e.nit === nit);
+  if (dup) { alert('Ya existe una empresa con ese NIT'); return; }
+
+  try {
+    await apiPost('crearEmpresa', {
+      nit,
+      nombre: document.getElementById('emp-nombre').value.trim(),
+      sector: document.getElementById('emp-sector').value,
+      estado: document.getElementById('emp-estado').value
+    });
+
+    closeModal('modal-empresa');
+    ['emp-nit','emp-nombre'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('emp-sector').value = '';
+    await cargarDatos();
+    renderEmpresas();
+    populateSectorFilter();
+
+  } catch(e) {
+    alert('Error al guardar empresa: ' + e.message);
+  }
 }
 
 // ══════════════════════════════════════════════════════
