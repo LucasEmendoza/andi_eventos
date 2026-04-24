@@ -1036,12 +1036,12 @@ function renderEventos() {
     </tr>`).join('') : '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--c-text-3)">No hay eventos</td></tr>';
 }
 
-function crearEvento() {
+async function crearEvento() {
   const fields = [
-    {id:'fg-ev-nombre',val:()=>document.getElementById('ev-nombre').value.trim()},
-    {id:'fg-ev-fecha',val:()=>document.getElementById('ev-fecha').value},
-    {id:'fg-ev-tipo',val:()=>document.getElementById('ev-tipo').value},
-    {id:'fg-ev-peso',val:()=>document.getElementById('ev-peso').value},
+    {id:'fg-ev-nombre', val:()=>document.getElementById('ev-nombre').value.trim()},
+    {id:'fg-ev-fecha',  val:()=>document.getElementById('ev-fecha').value},
+    {id:'fg-ev-tipo',   val:()=>document.getElementById('ev-tipo').value},
+    {id:'fg-ev-peso',   val:()=>document.getElementById('ev-peso').value},
   ];
   let ok = true;
   fields.forEach(f => {
@@ -1051,27 +1051,34 @@ function crearEvento() {
     if (!v) ok = false;
   });
   if (!ok) return;
-  const ev = {
-    id: 'EV' + String(DB.eventos.length+1).padStart(3,'0'),
-    nombre: document.getElementById('ev-nombre').value.trim(),
-    fecha: document.getElementById('ev-fecha').value,
-    tipo: document.getElementById('ev-tipo').value,
-    comite: document.getElementById('ev-comite').value,
-    lugar: document.getElementById('ev-lugar').value,
-    organizador: document.getElementById('ev-organizador').value,
-    peso: parseInt(document.getElementById('ev-peso').value),
-    cupo: parseInt(document.getElementById('ev-cupo').value)||0,
-    estado: 'Próximo'
-  };
-  DB.eventos.unshift(ev);
-  closeModal('modal-evento');
-  ['ev-nombre','ev-fecha','ev-comite','ev-lugar','ev-organizador','ev-cupo'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('ev-tipo').value=''; document.getElementById('ev-peso').value='';
-  renderEventos();
-  populateEventoSelect();
-  populateAsistEventoSelect();
-}
 
+  try {
+    await apiPost('crearEvento', {
+      nombre:      document.getElementById('ev-nombre').value.trim(),
+      fecha:       document.getElementById('ev-fecha').value,
+      tipo:        document.getElementById('ev-tipo').value,
+      comite:      document.getElementById('ev-comite').value.trim(),
+      lugar:       document.getElementById('ev-lugar').value.trim(),
+      organizador: document.getElementById('ev-organizador').value.trim(),
+      peso:        document.getElementById('ev-peso').value,
+      cupo:        document.getElementById('ev-cupo').value || 0
+    });
+
+    closeModal('modal-evento');
+    ['ev-nombre','ev-fecha','ev-comite','ev-lugar','ev-organizador','ev-cupo']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ev-tipo').value = '';
+    document.getElementById('ev-peso').value = '';
+
+    await cargarDatos();
+    renderEventos();
+    populateEventoSelect();
+    populateAsistEventoSelect();
+
+  } catch(e) {
+    alert('Error al crear evento: ' + e.message);
+  }
+}
 function verAsistenciaEvento(id) {
   showPage('asistencia', null);
   setTimeout(()=>{
