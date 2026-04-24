@@ -843,7 +843,7 @@ hr-light { display: block; height: 1px; background: var(--c-border); margin: 16p
 // ══════════════════════════════════════════════════════
 // BASE DE DATOS EN MEMORIA
 // ══════════════════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbzJ_WU8d2wJ4Y25wiql-4S_Tzcx2_a9KBWOuiCl7L7rFmiOFCxg73F8unqJSxLUz5Jc/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxcWy5nrVjo-e6hokoiQfsfh1ea0-HgJP2_aBgq3djMX_8Cqu_sw_FPo-rJIWwJI4Ae/exec';
 
 
 // ══════════════════════════════════════════════════════
@@ -1541,15 +1541,18 @@ let DB = { empresas:[], eventos:[], inscritos:[], asistencia:[] };
 
 async function apiGet(action) {
   const res = await fetch(`${API_URL}?action=${action}`);
-  return (await res.json()).data;
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error);
+  return json.data;
 }
 
+// ← ESTE ES EL CAMBIO CLAVE: todo va como GET, no POST
 async function apiPost(action, data) {
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action, data })
-  });
-  return (await res.json()).data;
+  const url = `${API_URL}?action=${action}&payload=${encodeURIComponent(JSON.stringify(data))}`;
+  const res = await fetch(url);
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error);
+  return json.data;
 }
 
 async function cargarDatos() {
