@@ -1301,12 +1301,27 @@ function renderAsistencia() {
   }).join('') : '<p style="font-size:13px;color:var(--c-text-3)">Sin inscritos</p>';
 }
 
-function toggleAsist(evId, cedula) {
-  let a = DB.asistencia.find(a=>a.id_evento===evId&&a.cedula===cedula);
-  if (!a) { a = {id_evento:evId,cedula,asistio:false,hora:null}; DB.asistencia.push(a); }
-  a.asistio = !a.asistio;
-  a.hora = a.asistio ? (new Date().getHours().toString().padStart(2,'0')+':'+new Date().getMinutes().toString().padStart(2,'0')) : null;
-  renderAsistencia();
+async function toggleAsist(evId, cedula) {
+  const rec = DB.asistencia.find(
+    a => a.id_evento === evId && a.cedula === cedula);
+
+  if (rec && rec.asistio) return; // check-in es de un solo sentido
+
+  try {
+    await apiPost('checkIn', { id_evento: evId, cedula });
+
+    // Actualizar local inmediatamente para respuesta rápida
+    if (rec) {
+      rec.asistio = true;
+      rec.hora = new Date().getHours().toString().padStart(2,'0') + ':' +
+                 new Date().getMinutes().toString().padStart(2,'0');
+    }
+    renderAsistencia();
+    renderDashboard();
+
+  } catch(e) {
+    alert('Error en check-in: ' + e.message);
+  }
 }
 
 function simQR() {
