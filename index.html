@@ -987,6 +987,7 @@ function showPage(id, navEl) {
   else { document.querySelectorAll('.nav-item').forEach(n => { if (n.onclick && n.onclick.toString().includes("'" + id + "'")) n.classList.add('active'); }); }
   document.getElementById('topbar-title').textContent = titles[id] || id;
   refreshPage(id);
+  if (page === 'inscripcion') renderQRInscripcion();
 }
 
 function refreshPage(id) {
