@@ -238,6 +238,7 @@ hr-light { display: block; height: 1px; background: var(--c-border); margin: 16p
   .form-grid, .grid-2, .grid-3 { grid-template-columns: 1fr; }
 }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -386,7 +387,45 @@ hr-light { display: block; height: 1px; background: var(--c-border); margin: 16p
     <h2>Inscripción de participantes</h2>
     <p>Registro de asistentes a eventos. Todos los campos marcados con * son obligatorios.</p>
   </div>
+   <!-- QR Inscripción pública -->
+  <div class="card" style="margin-bottom:20px;padding:20px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap">
+      
+      <!-- Texto -->
+      <div style="flex:1;min-width:200px">
+        <div class="section-label" style="margin-bottom:8px">Formulario público de inscripción</div>
+        <p style="font-size:13px;color:var(--c-text-2);margin-bottom:16px;line-height:1.6">
+          Comparte este QR o link con los participantes para que se inscriban directamente desde el formulario de Google.
+        </p>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+          <input id="input-form-url" readonly onclick="this.select()"
+            style="flex:1;font-size:11px;padding:8px 10px;border-radius:var(--radius);
+                   border:1px solid var(--c-border);background:var(--c-bg-2);
+                   font-family:monospace;cursor:pointer;color:var(--c-text-2)">
+          <button onclick="copiarLinkForm()" id="btn-copiar-form"
+            style="padding:8px 14px;font-size:12px;border-radius:var(--radius);
+                   border:1px solid var(--c-border);background:var(--c-bg-2);
+                   cursor:pointer;white-space:nowrap;font-weight:500">
+            Copiar
+          </button>
+        </div>
+        <a id="link-abrir-form" href="" target="_blank"
+          style="font-size:12px;color:var(--c-accent);font-weight:500;text-decoration:none">
+          Abrir formulario en nueva pestaña →
+        </a>
+      </div>
 
+      <!-- QR -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+        <div style="padding:12px;background:#fff;border-radius:10px;
+                    border:1px solid var(--c-border);display:inline-block">
+          <div id="qr-inscripcion"></div>
+        </div>
+        <span style="font-size:11px;color:var(--c-text-3)">Escanear para inscribirse</span>
+      </div>
+
+    </div>
+  </div>
   <div class="grid-2">
     <!-- Formulario -->
     <div class="card">
@@ -844,7 +883,33 @@ hr-light { display: block; height: 1px; background: var(--c-border); margin: 16p
 // BASE DE DATOS EN MEMORIA
 // ══════════════════════════════════════════════════════
 const API_URL = 'https://script.google.com/macros/s/AKfycbxcWy5nrVjo-e6hokoiQfsfh1ea0-HgJP2_aBgq3djMX_8Cqu_sw_FPo-rJIWwJI4Ae/exec';
+const FORM_URL = 'https://docs.google.com/forms/d/1KuT2Vx968U7rBKPrt7ujxyAYsi1hafNutElLF0HGuX4/viewform';
 
+function copiarLink() {
+  navigator.clipboard.writeText(FORM_URL).then(() => {
+    const btn = document.getElementById('btn-copiar');
+    btn.textContent = '¡Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar link', 2000);
+  });
+}
+
+function renderQRInscripcion() {
+  // Poblar input y link
+  document.getElementById('input-form-url').value   = FORM_URL;
+  document.getElementById('link-abrir-form').href   = FORM_URL;
+
+  // Generar QR
+  const contenedor = document.getElementById('qr-inscripcion');
+  if (!contenedor) return;
+  contenedor.innerHTML = '';
+  new QRCode(contenedor, {
+    text:       FORM_URL,
+    width:      140,
+    height:     140,
+    colorDark:  '#1A3A2A',
+    colorLight: '#ffffff'
+  });
+}
 
 // ══════════════════════════════════════════════════════
 // UTILIDADES
@@ -997,8 +1062,21 @@ function renderDashboard() {
       <td>${e.inscritos}</td>
       <td>${badgeSeg(segmento(e.score))}</td>
     </tr>`).join('');
+  renderQRInscripcion();
+ 
 }
-
+function renderQRInscripcion() {
+  const contenedor = document.getElementById('qr-inscripcion');
+  if (!contenedor) return;
+  contenedor.innerHTML = '';
+  new QRCode(contenedor, {
+    text: FORM_URL,
+    width: 140,
+    height: 140,
+    colorDark: '#1A3A2A',
+    colorLight: '#ffffff'
+  });
+}
 // ══════════════════════════════════════════════════════
 // EVENTOS
 // ══════════════════════════════════════════════════════
@@ -1605,6 +1683,7 @@ async function cargarDatos() {
   DB.asistencia = DB.asistencia.map(a =>
     ({...a, asistio: a.asistio === true || a.asistio === 'TRUE'}));
   renderDashboard();
+  renderQRInscripcion();
   document.getElementById('loader').style.display = 'none';
 }
 
