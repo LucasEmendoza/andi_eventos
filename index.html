@@ -893,24 +893,7 @@ function copiarLink() {
   });
 }
 
-function renderQRInscripcion() {
-  const input = document.getElementById('input-form-url');
-  const link  = document.getElementById('link-abrir-form');
-  
-  if (input) input.value = FORM_URL;
-  if (link)  link.href   = FORM_URL;
 
-  const contenedor = document.getElementById('qr-inscripcion');
-  if (!contenedor) return;
-  contenedor.innerHTML = '';
-  new QRCode(contenedor, {
-    text:       FORM_URL,
-    width:      130,
-    height:     130,
-    colorDark:  '#1A3A2A',
-    colorLight: '#ffffff'
-  });
-}
 
 // ══════════════════════════════════════════════════════
 // UTILIDADES
@@ -987,7 +970,7 @@ function showPage(id, navEl) {
   else { document.querySelectorAll('.nav-item').forEach(n => { if (n.onclick && n.onclick.toString().includes("'" + id + "'")) n.classList.add('active'); }); }
   document.getElementById('topbar-title').textContent = titles[id] || id;
   refreshPage(id);
-  if (page === 'inscripcion') renderQRInscripcion();
+  if (id === 'inscripcion') renderQRInscripcion();
 }
 
 function refreshPage(id) {
@@ -1067,18 +1050,21 @@ function renderDashboard() {
   renderQRInscripcion();
  
 }
+
 function renderQRInscripcion() {
+  const input = document.getElementById('input-form-url');
+  const link  = document.getElementById('link-abrir-form');
+  if (input) { input.value = FORM_URL; input.setAttribute('value', FORM_URL); }
+  if (link)  { link.href = FORM_URL; }
   const contenedor = document.getElementById('qr-inscripcion');
   if (!contenedor) return;
   contenedor.innerHTML = '';
   new QRCode(contenedor, {
-    text: FORM_URL,
-    width: 140,
-    height: 140,
-    colorDark: '#1A3A2A',
-    colorLight: '#ffffff'
+    text: FORM_URL, width: 130, height: 130,
+    colorDark: '#1A3A2A', colorLight: '#ffffff'
   });
 }
+
 // ══════════════════════════════════════════════════════
 // EVENTOS
 // ══════════════════════════════════════════════════════
