@@ -580,7 +580,39 @@ hr-light { display: block; height: 1px; background: var(--c-border); margin: 16p
       <p>Check-in digital por evento. Marque los asistentes manualmente o simule lectura QR.</p>
     </div>
   </div>
-
+  <div class="card" style="margin-bottom:20px;padding:20px">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap">
+    <div style="flex:1;min-width:200px">
+      <div class="section-label" style="margin-bottom:8px">Formulario de registro de asistencia</div>
+      <p style="font-size:13px;color:var(--c-text-2);margin-bottom:16px;line-height:1.6">
+        Comparte este QR el día del evento para que los participantes registren su asistencia desde su celular.
+      </p>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+        <input id="input-asist-url" readonly onclick="this.select()"
+          style="flex:1;font-size:11px;padding:8px 10px;border-radius:var(--radius);
+                 border:1px solid var(--c-border);background:var(--c-bg);
+                 font-family:monospace;cursor:pointer;color:var(--c-text-2)">
+        <button onclick="copiarLinkAsist()" id="btn-copiar-asist"
+          style="padding:8px 14px;font-size:12px;border-radius:var(--radius);
+                 border:1px solid var(--c-border);background:var(--c-bg);
+                 cursor:pointer;white-space:nowrap;font-weight:500">
+          Copiar
+        </button>
+      </div>
+      <a id="link-abrir-asist" href="" target="_blank"
+        style="font-size:12px;color:var(--c-accent);font-weight:500;text-decoration:none">
+        Abrir formulario de asistencia →
+      </a>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px">
+      <div style="padding:12px;background:#fff;border-radius:10px;
+                  border:1px solid var(--c-border);display:inline-block">
+        <div id="qr-asistencia-form"></div>
+      </div>
+      <span style="font-size:11px;color:var(--c-text-3)">Escanear para registrar asistencia</span>
+    </div>
+  </div>
+</div>     
   <div class="grid-2 mb-6">
     <div class="fg">
       <label>Seleccione el evento</label>
@@ -884,7 +916,15 @@ hr-light { display: block; height: 1px; background: var(--c-border); margin: 16p
 // ══════════════════════════════════════════════════════
 const API_URL = 'https://script.google.com/macros/s/AKfycbxcWy5nrVjo-e6hokoiQfsfh1ea0-HgJP2_aBgq3djMX_8Cqu_sw_FPo-rJIWwJI4Ae/exec';
 const FORM_URL = 'https://docs.google.com/forms/d/1KuT2Vx968U7rBKPrt7ujxyAYsi1hafNutElLF0HGuX4/viewform';
+const FORM_ASIST_URL = 'https://docs.google.com/forms/d/1ZoRAObRyPBzVV7Kg_guMvh1T1D73teuzoTVGPuRZUvM/viewform';
 
+function copiarLinkAsist() {
+  navigator.clipboard.writeText(FORM_ASIST_URL).then(() => {
+    const btn = document.getElementById('btn-copiar-asist');
+    btn.textContent = '¡Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar', 2000);
+  });
+}
 function copiarLink() {
   navigator.clipboard.writeText(FORM_URL).then(() => {
     const btn = document.getElementById('btn-copiar');
@@ -892,7 +932,19 @@ function copiarLink() {
     setTimeout(() => btn.textContent = 'Copiar link', 2000);
   });
 }
-
+function renderQRAsistencia() {
+  const input = document.getElementById('input-asist-url');
+  const link  = document.getElementById('link-abrir-asist');
+  if (input) { input.value = FORM_ASIST_URL; input.setAttribute('value', FORM_ASIST_URL); }
+  if (link)  { link.href = FORM_ASIST_URL; }
+  const contenedor = document.getElementById('qr-asistencia-form');
+  if (!contenedor) return;
+  contenedor.innerHTML = '';
+  new QRCode(contenedor, {
+    text: FORM_ASIST_URL, width: 130, height: 130,
+    colorDark: '#1A3A2A', colorLight: '#ffffff'
+  });
+}
 
 
 // ══════════════════════════════════════════════════════
@@ -971,6 +1023,7 @@ function showPage(id, navEl) {
   document.getElementById('topbar-title').textContent = titles[id] || id;
   refreshPage(id);
   if (id === 'inscripcion') renderQRInscripcion();
+  if (id === 'asistencia') renderQRAsistencia();
 }
 
 function refreshPage(id) {
