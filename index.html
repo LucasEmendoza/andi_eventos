@@ -254,9 +254,27 @@ hr-light { display: block; height: 1px; background: var(--c-border); margin: 16p
 <!-- SIDEBAR -->
 <nav class="sidebar">
   <div class="sidebar-brand">
-    <div class="logo">ANDI</div>
-    <div class="tagline">Gestión de Eventos</div>
+  <div style="padding:20px 20px 16px">
+    <!-- Logo oficial ANDI -->
+    <img 
+      src="https://www.andi.com.co/Uploads/logo_637164318144189854.png"
+      alt="ANDI"
+      style="width:100%;max-width:140px;display:block;filter:brightness(0) invert(1)"
+      onerror="this.style.display='none';document.getElementById('logo-text').style.display='block'"
+    >
+    <!-- Fallback texto si el logo no carga -->
+    <div id="logo-text" style="display:none;font-size:20px;font-weight:700;color:#fff;letter-spacing:1px">ANDI</div>
+    <div style="font-size:10px;color:rgba(255,255,255,.45);margin-top:6px;line-height:1.4">
+      Asociación Nacional de<br>Empresarios de Colombia
+    </div>
+    <!-- Franja tricolor -->
+    <div style="display:flex;height:3px;margin-top:14px;border-radius:2px;overflow:hidden">
+      <span style="flex:2;background:#FCD116"></span>
+      <span style="flex:2;background:#013D4A"></span>
+      <span style="flex:1;background:#C8102E"></span>
+    </div>
   </div>
+</div>
   <div class="sidebar-nav">
     <div class="nav-section">Principal</div>
     <div class="nav-item active" onclick="showPage('dashboard', this)">
